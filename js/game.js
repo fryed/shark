@@ -256,9 +256,9 @@ function level1(){
         	this.y += movebyY;
 
         	if(obstacle){
-        		console.log(this.x,this.y,obstacle);
+        		/*console.log(this.x,this.y,obstacle);
         		this.x -= movebyX;
-        		this.y -= movebyY;
+        		this.y -= movebyY;*/
         	}
         	
         }

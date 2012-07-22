@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+	
+<head>
+	
+<meta charset="utf-8"/>
+
+<title>Canvas game</title>
+
+<link rel="stylesheet" href="css/reset.css" type="text/css" />
+<link rel="stylesheet" href="css/base.css" type="text/css" />
+
+<script type="text/javascript" src="lib/jquery/jquery-1.7.2.js"></script>
+<script type="text/javascript" src="lib/box2d/Box2dWeb.js"></script>
+<script type="text/javascript" src="lib/hotkeys/hotkeys.js"></script>
+<script type="text/javascript" src="lib/jaws/jaws.js"></script>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+	init();
+});
+
+function init(){
+	var b2Vec2 			= Box2D.Common.Math.b2Vec2;
+	var b2BodyDef 		= Box2D.Dynamics.b2BodyDef;
+	var b2Body 			= Box2D.Dynamics.b2Body;
+	var b2FixtureDef 	= Box2D.Dynamics.b2FixtureDef;
+	var b2Fixture 		= Box2D.Dynamics.b2Fixture;
+	var b2World 		= Box2D.Dynamics.b2World;
+	var b2MassData 		= Box2D.Collision.Shapes.b2MassData;
+	var b2PolygonShape 	= Box2D.Collision.Shapes.b2PolygonShape;
+	var b2CircleShape 	= Box2D.Collision.Shapes.b2CircleShape;
+	var b2DebugDraw 	= Box2D.Dynamics.b2DebugDraw;
+	
+	var canvas 	= $("#canvas");
+	var _canvas = canvas.get(0); 
+	var context = _canvas.getContext("2d");
+	var cHeight = canvas.height();
+	var cWidth 	= canvas.width();
+	var scale	= "1:60"; //1m is 60px
+	
+	function px2m(px){
+		var ratio = scale.split(":");
+		ratio = parseInt(ratio[0])/parseInt(ratio[1]);
+		return px*ratio;
+	}
+	
+	function m2px(m){
+		var ratio = scale.split(":");
+		ratio = parseInt(ratio[1])/parseInt(ratio[0]);
+		return m*ratio;
+	}
+		
+	var world 	= new b2World(
+		new b2Vec2(0,10), 	//gravity
+		true				//allow sleep
+	);
+
+	var fixDef 			= new b2FixtureDef;
+	fixDef.density 		= 1.0;
+	fixDef.friction 	= 0.5;
+	fixDef.restitution 	= 0.2;
+	var bodyDef 		= new b2BodyDef;
+	
+	//create boundries
+	bodyDef.type = b2Body.b2_staticBody;
+	fixDef.shape = new b2PolygonShape;
+	
+	//make floor
+	var floor = {
+		x 		: px2m(cWidth),
+		y 		: px2m(cHeight)*2,
+		width 	: px2m(cWidth),
+		height 	: px2m(2)
+	}
+	fixDef.shape.SetAsBox(floor.width,floor.height);
+	bodyDef.position.Set(floor.x,floor.y);
+	world.CreateBody(bodyDef).CreateFixture(fixDef);
+	
+	//make roof
+	var roof = {
+		x 		: px2m(cWidth),
+		y 		: 0,
+		width 	: px2m(cWidth),
+		height 	: px2m(2)
+	}
+	fixDef.shape.SetAsBox(roof.width,roof.height);
+	bodyDef.position.Set(roof.x,roof.y);
+	world.CreateBody(bodyDef).CreateFixture(fixDef);
+	
+	//make walls
+	var wall = {
+		x 		: 0,
+		y 		: px2m(cHeight),
+		width 	: px2m(2),
+		height 	: px2m(cHeight)
+	}
+	fixDef.shape.SetAsBox(wall.width,wall.height);
+	bodyDef.position.Set(wall.x,wall.y);
+	world.CreateBody(bodyDef).CreateFixture(fixDef);
+	
+	//make walls
+	var wall = {
+		x 		: px2m(cWidth)*2,
+		y 		: px2m(cHeight),
+		width 	: px2m(2),
+		height 	: px2m(cHeight)
+	}
+	fixDef.shape.SetAsBox(wall.width,wall.height);
+	bodyDef.position.Set(wall.x,wall.y);
+	world.CreateBody(bodyDef).CreateFixture(fixDef);
+	
+	//create some objects
+	bodyDef.type = b2Body.b2_dynamicBody;
+	
+	/*for(var i = 0; i < 2; ++i) {
+		
+		if(Math.random() > 0.5) {
+			
+			//make a square
+			fixDef.shape = new b2PolygonShape;
+			fixDef.shape.SetAsBox(
+				Math.random() + 0.1, //half width
+			 	Math.random() + 0.1 //half height
+			);
+			
+		}else{
+			//make a circle
+			fixDef.shape = new b2CircleShape(
+				Math.random() + 0.1 //radius
+			);
+	
+		}
+		
+		//random position and draw
+		bodyDef.position.x = Math.random() * 10;
+		bodyDef.position.y = Math.random() * 10;
+		world.CreateBody(bodyDef).CreateFixture(fixDef);
+		
+	}
+	
+	//create the player
+	var player = {
+		x 		: px2m(cWidth),
+		y 		: px2m(cHeight)*2,
+		width 	: px2m(20), 
+		height 	: px2m(20)
+	}
+	
+	drawPlayer();
+	
+	function drawPlayer(){
+		player.shape = new b2PolygonShape;
+		player.shape.userData = "player";
+		player.shape.SetAsBox(player.width,player.height);
+		player.body = new b2BodyDef();  
+		bodyDef.position.x = player.x;
+		bodyDef.position.y = player.y;
+		world.CreateBody(bodyDef).CreateFixture(fixDef);
+	}*/
+	
+	var worldBody = world.GetBodyList();
+
+	//setup debug draw
+	var debugDraw = new b2DebugDraw();
+	debugDraw.SetSprite(context);
+	debugDraw.SetDrawScale(30.0);
+	debugDraw.SetFillAlpha(0.5);
+	debugDraw.SetLineThickness(1.0);
+	debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+	world.SetDebugDraw(debugDraw);
+	window.setInterval(update,1000/60); 
+	
+	//the animation loop
+	function update(){
+		world.Step(1/60,10,10);
+		world.DrawDebugData();
+		world.ClearForces();
+		events();
+	}
+	
+	window.right = false;
+	$(document).bind("keydown","right",function(e){
+		e.preventDefault();
+		window.right = true;
+	});
+	$(document).bind("keyup","right",function(e){
+		e.preventDefault();
+		window.right = false;
+	});
+	window.left = false;
+	$(document).bind("keydown","left",function(e){
+		e.preventDefault();
+		window.left = true;
+	});
+	$(document).bind("keyup","left",function(e){
+		e.preventDefault();
+		window.left = false;
+	});
+	window.up = false;
+	$(document).bind("keydown","up",function(e){
+		e.preventDefault();
+		window.up = true;
+	});
+	$(document).bind("keyup","up",function(e){
+		e.preventDefault();
+		window.up = false;
+	});
+	
+	//the events
+	function events(){
+		
+		var collision = world.m_contactList;
+		console.log(collision);
+		if(collision){
+			console.log(collision.GetFixtureA().GetUserData());  
+		}
+		
+		if(window.right){
+			var force = new b2Vec2(5,0);
+			worldBody.ApplyForce(force,worldBody.GetWorldCenter());
+		}
+		if(window.left){
+			var force = new b2Vec2(-5,0);
+			worldBody.ApplyForce(force,worldBody.GetWorldCenter());
+		}
+		if(window.up){
+			if(!player.jumping){
+				var force = new b2Vec2(0,-3);
+				worldBody.ApplyImpulse(force,worldBody.GetWorldCenter());
+				player.jumping = true;
+			}
+		}
+		
+	}
+}
+
+</script>
+
+
+</head>
+
+<body>
+	<canvas id="canvas" width="400" height="200"></canvas>
+</body>
+
+</html>
