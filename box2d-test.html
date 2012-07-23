@@ -114,51 +114,82 @@ function init(){
 	//create some objects
 	bodyDef.type = b2Body.b2_dynamicBody;
 	
-	/*for(var i = 0; i < 2; ++i) {
-		
-		if(Math.random() > 0.5) {
-			
-			//make a square
-			fixDef.shape = new b2PolygonShape;
-			fixDef.shape.SetAsBox(
-				Math.random() + 0.1, //half width
-			 	Math.random() + 0.1 //half height
-			);
-			
-		}else{
-			//make a circle
-			fixDef.shape = new b2CircleShape(
-				Math.random() + 0.1 //radius
-			);
+	/*GUMBA ENEMY*/
 	
+	//fixDef.density 		= 1;
+	//fixDef.friction 	= 1;
+	//fixDef.restitution 	= 1;
+	
+	//make a circle
+	fixDef.shape = new b2CircleShape(
+		0.5 //radius
+	);
+
+	//position and draw
+	bodyDef.position.x = 1;
+	bodyDef.position.y = 1;
+	var enemy = world.CreateBody(bodyDef).CreateFixture(fixDef);
+	
+	function drawEnemy(){
+		
+		//set speed
+		var speed = 0.05;
+		
+		//set impulse
+		enemy.impulse = [0,0];
+		
+		//get collisions
+		var collisions = enemy.m_body.m_contactList;
+		
+		//set jumping
+		enemy.jumping = true;
+		
+		//get velocity
+		var velocity = enemy.m_body.GetLinearVelocity();
+		
+		//work out direction traveling
+		if(velocity.x > 0){
+			enemy.dirX = "right";
+		}else if(velocity.x < 0){
+			enemy.dirX = "left";
+		} 
+		if(velocity.y > 0){
+			enemy.dirY = "down";
+		}else if(velocity.y < 0){
+			enemy.dirY = "up";
 		}
 		
-		//random position and draw
-		bodyDef.position.x = Math.random() * 10;
-		bodyDef.position.y = Math.random() * 10;
-		world.CreateBody(bodyDef).CreateFixture(fixDef);
+		//move player
+		if(collisions){
+			if(collisions.contact.IsTouching()){
+				
+				//set x impulse
+				enemy.impulse[0] = speed;
+				if(enemy.dirX == "left"){
+					enemy.impulse[0] = -speed;
+				}
+				
+				if(enemy.dirY == "down"){
+					enemy.jumping = false;
+				}
+				
+			}
+		}
+		
+		//if jumping
+		if(!enemy.jumping){
+			enemy.jumping = true;
+			enemy.impulse[1] = -speed*70;
+		}
+		
+		//apply force 
+		var force = new b2Vec2(enemy.impulse[0],enemy.impulse[1]);
+		enemy.m_body.ApplyImpulse(force,enemy.m_body.GetWorldCenter());
 		
 	}
 	
-	//create the player
-	var player = {
-		x 		: px2m(cWidth),
-		y 		: px2m(cHeight)*2,
-		width 	: px2m(20), 
-		height 	: px2m(20)
-	}
-	
-	drawPlayer();
-	
-	function drawPlayer(){
-		player.shape = new b2PolygonShape;
-		player.shape.userData = "player";
-		player.shape.SetAsBox(player.width,player.height);
-		player.body = new b2BodyDef();  
-		bodyDef.position.x = player.x;
-		bodyDef.position.y = player.y;
-		world.CreateBody(bodyDef).CreateFixture(fixDef);
-	}*/
+	console.log(enemy);
+	/*END GUMBA ENEMY*/
 	
 	var worldBody = world.GetBodyList();
 
@@ -177,63 +208,9 @@ function init(){
 		world.Step(1/60,10,10);
 		world.DrawDebugData();
 		world.ClearForces();
-		events();
+		drawEnemy();
 	}
 	
-	window.right = false;
-	$(document).bind("keydown","right",function(e){
-		e.preventDefault();
-		window.right = true;
-	});
-	$(document).bind("keyup","right",function(e){
-		e.preventDefault();
-		window.right = false;
-	});
-	window.left = false;
-	$(document).bind("keydown","left",function(e){
-		e.preventDefault();
-		window.left = true;
-	});
-	$(document).bind("keyup","left",function(e){
-		e.preventDefault();
-		window.left = false;
-	});
-	window.up = false;
-	$(document).bind("keydown","up",function(e){
-		e.preventDefault();
-		window.up = true;
-	});
-	$(document).bind("keyup","up",function(e){
-		e.preventDefault();
-		window.up = false;
-	});
-	
-	//the events
-	function events(){
-		
-		var collision = world.m_contactList;
-		console.log(collision);
-		if(collision){
-			console.log(collision.GetFixtureA().GetUserData());  
-		}
-		
-		if(window.right){
-			var force = new b2Vec2(5,0);
-			worldBody.ApplyForce(force,worldBody.GetWorldCenter());
-		}
-		if(window.left){
-			var force = new b2Vec2(-5,0);
-			worldBody.ApplyForce(force,worldBody.GetWorldCenter());
-		}
-		if(window.up){
-			if(!player.jumping){
-				var force = new b2Vec2(0,-3);
-				worldBody.ApplyImpulse(force,worldBody.GetWorldCenter());
-				player.jumping = true;
-			}
-		}
-		
-	}
 }
 
 </script>
